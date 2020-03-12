@@ -1,4 +1,5 @@
 package sample;
+import javafx.animation.RotateTransition;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -17,6 +18,7 @@ import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 
 import java.io.File;
@@ -154,6 +156,16 @@ public class Main extends Application {
         //HBOX TO STORE NUMBER GUI BUTTONS
         HBox numberBox = new HBox(5);
         numberBox.setPadding(new Insets(10, 10, 10, 10));
+
+
+        //WIN ANIMATION
+        RotateTransition rotateTransition = new RotateTransition();
+        rotateTransition.setDuration(Duration.millis(1000));
+        rotateTransition.setNode(stackpane);
+        rotateTransition.setByAngle(360);
+        rotateTransition.setCycleCount(1);
+        rotateTransition.setAutoReverse(false);
+
 
         //LIST TO STORE BOXES
         ArrayList<Box> boxList = new ArrayList<Box>();
@@ -431,6 +443,7 @@ public class Main extends Application {
                         }
                     }
                     if(win==boxList.size()){
+                        rotateTransition.play();
                         System.out.println("you won bro");
                     }
 
@@ -706,6 +719,8 @@ public class Main extends Application {
                 }
             }
         });
+
+
 
         numberBox.getChildren().addAll(select, font);
 
