@@ -3,6 +3,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -10,9 +11,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -28,13 +26,10 @@ import java.util.*;
 /*
 QUESTIONS:
 DO I NEED TO CLEAR A CELL BEFORE I ENTER ANOTHER VALUE?
-
 things to keep in mind:
 if a mistake is not corrected immediately it doesn't remember it
-
 does undo need to reverse backspace
 when is undo unavailable?
-
 */
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,9 +48,19 @@ public class Main extends Application {
         boolean cageError=false;
         boolean rowError=false;
         boolean columnError=false;
+        int fontSize=50;
 
         Box(){
             text=new Text(null);
+            text.setFont(Font.font ("Comic Sans MS", fontSize));;
+        }
+
+        public int getFontSize() {
+            return fontSize;
+        }
+
+        public void setFontSize(int fontSize) {
+            this.fontSize = fontSize;
         }
 
         public Rectangle getRec() {
@@ -174,7 +179,7 @@ public class Main extends Application {
                         //Text number = new Text(x-13, y+19,num);
                         box.getText().setX(x-13);
                         box.getText().setY(y+19);
-                        box.getText().setFont(Font.font ("Comic Sans MS", 50));
+                        //box.getText().setFont(Font.font ("Comic Sans MS", 50));
                         box.setNum(num);
                         box.getText().setText(box.getNum());
                         canvas.getChildren().add(box.getText());
@@ -268,7 +273,7 @@ public class Main extends Application {
 
                                 box.getText().setX(x - 13);
                                 box.getText().setY(y + 19);
-                                box.getText().setFont(Font.font("Comic Sans MS", 50));
+                                //box.getText().setFont(Font.font("Comic Sans MS", 50));
                                 box.setNum(num);
                                 box.getText().setText(box.getNum());
                                 canvas.getChildren().add(box.getText());
@@ -389,13 +394,15 @@ public class Main extends Application {
             }
         }
 
+        ArrayList<Text> boxLables = new ArrayList<>();
         for (int i=0; i<cageList.size(); i++){
             Rectangle rec = (Rectangle) gridPane.getChildren().get(cageList.get(i).get(0)-1);
             int x = (int) rec.getX();
             int y = (int) rec.getY();
 
-            Text text = new Text(x+5, y+20, strings.get(i));
+            Text text = new Text(x+5, y+24, strings.get(i));
             text.setFont(Font.font ("Comic Sans MS", 20));
+            boxLables.add(text);
             canvas.getChildren().add(text);
         }
 
@@ -628,7 +635,7 @@ public class Main extends Application {
 
                     box.getText().setX(x - 13);
                     box.getText().setY(y + 19);
-                    box.getText().setFont(Font.font("Comic Sans MS", 50));
+                    //box.getText().setFont(Font.font("Comic Sans MS", 50));
                     box.getText().setText(box.getNum());
                     canvas.getChildren().add(box.getText());
                     boxStack.push(box);
@@ -646,6 +653,61 @@ public class Main extends Application {
                 showMistakes=mistake.isSelected();
             }
         });
+
+        Label select = new Label("Select Font size");
+        ChoiceBox font = new ChoiceBox();
+        font.getItems().add("small");
+        font.getItems().add("medium");
+        font.getItems().add("big");
+
+        font.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
+                if(t1.equals(0)){
+                    for(Box box : boxList){
+                        /*Text text = box.getText();
+                        text.setX(text.getX() + 6);*/
+                        box.getText().setFont(Font.font ("Comic Sans MS", 40));
+                        box.setFontSize(40);
+
+                    }
+
+                    for (Text text : boxLables){
+                        text.setFont(Font.font ("Comic Sans MS", 15));
+                        //text.setY(text.getY()-3);
+                    }
+
+                }
+
+                if(t1.equals(1)){
+                    for(Box box : boxList){
+                        box.getText().setFont(Font.font ("Comic Sans MS", 50));
+                        box.setFontSize(50);
+                    }
+
+                    for (Text text : boxLables){
+                        text.setFont(Font.font ("Comic Sans MS", 20));
+                    }
+                }
+
+                if(t1.equals(2)){
+                    for(Box box : boxList){
+                        /*Text text = box.getText();
+                        text.setX(text.getX() + 10);
+                        text.setY(text.getY() + 5);*/
+                        box.getText().setFont(Font.font ("Comic Sans MS", 60));
+                        box.setFontSize(60);
+                    }
+
+                    for (Text text : boxLables){
+                        text.setFont(Font.font ("Comic Sans MS", 25));
+                        //text.setY(text.getY()+5);
+                    }
+                }
+            }
+        });
+
+        numberBox.getChildren().addAll(select, font);
 
         hbox.getChildren().addAll(undo, redo, clear, file, input, load, mistake);
         vbox.getChildren().addAll(stackpane, hbox, numberBox);
