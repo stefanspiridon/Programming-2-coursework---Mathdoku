@@ -22,10 +22,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 import java.util.*;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,6 +33,9 @@ things to keep in mind:
 if a mistake is not corrected immediately it doesn't remember it
 does undo need to reverse backspace
 when is undo unavailable?
+
+bugs:
+winning is wrong FIXED
 */
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -185,7 +185,7 @@ public class Main extends Application {
 
         //BACKSPACE GUI BUTTON
         Button backspace = new Button("⌫");
-        numberBox.getChildren().addAll(backspace);
+        //numberBox.getChildren().addAll(backspace);
 
         //List for box labels
         ArrayList<Text> boxLables = new ArrayList<>();
@@ -211,27 +211,42 @@ public class Main extends Application {
 
             @Override
             public void handle(ActionEvent event) {
-                FileChooser fileChooser = new FileChooser();
+                File file = new File("input2.txt");
+                if(textArea.getText().isEmpty()) {
+                    //file = null;
 
-                fileChooser.setTitle("Open File to Load");
-                FileChooser.ExtensionFilter txtFilter = new FileChooser.ExtensionFilter("Text files",
-                        "*.txt");
-                fileChooser.getExtensionFilters().add(txtFilter);
+                    FileChooser fileChooser = new FileChooser();
 
-                File file = fileChooser.showOpenDialog(primaryStage);
+                    fileChooser.setTitle("Open File to Load");
+                    FileChooser.ExtensionFilter txtFilter = new FileChooser.ExtensionFilter("Text files",
+                            "*.txt");
+                    fileChooser.getExtensionFilters().add(txtFilter);
 
-                if (file != null && file.exists() && file.canRead()) {
-                    try {
-                        BufferedReader buffered = new BufferedReader(
-                                new FileReader(file));
-                        String line;
-                        while ((line = buffered.readLine()) != null) {
-                            textArea.appendText(line + "\n");
+                    file = fileChooser.showOpenDialog(primaryStage);
+
+                    if (file != null && file.exists() && file.canRead()) {
+                        try {
+                            BufferedReader buffered = new BufferedReader(
+                                    new FileReader(file));
+                            String line;
+                            while ((line = buffered.readLine()) != null) {
+                                textArea.appendText(line + "\n");
+                            }
+                            buffered.close();
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                        buffered.close();
-                    } catch (Exception e) {
+                    }
+                } else {
+
+                    PrintWriter writer = null;
+                    try {
+                        writer = new PrintWriter(file);
+                    } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
+                    writer.println(textArea.getText());
+                    writer.close();
 
                 }
 
@@ -395,6 +410,8 @@ public class Main extends Application {
                     numberBox.getChildren().add(button);
                 }
 
+                numberBox.getChildren().add(backspace);
+
                 //BACKSPACE GUI BUTTON HANDLE
                 backspace.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
                     for(Box box : boxList){
@@ -477,7 +494,7 @@ public class Main extends Application {
                                 redo.setDisable(true);
                             }
 
-                            int win=0;
+                            /*int win=0;
                             for(Box box : boxList){
                                 if(!box.isCageError() && !box.isColumnError() && !box.isRowError()
                                         && box.getText().getText()!=null && !box.getText().getText().isEmpty()){
@@ -487,7 +504,7 @@ public class Main extends Application {
                             if(win==boxList.size()){
                                 rotateTransition.play();
                                 System.out.println("you won bro");
-                            }
+                            }*/
 
                             for(Box box : boxList){
                                 box.setColumnError(false);
@@ -628,6 +645,25 @@ public class Main extends Application {
                                 }
                             }
 
+                            int win=0;
+                            for(Box box : boxList){
+                                if(!box.isCageError() && !box.isColumnError() && !box.isRowError()
+                                        && box.getText().getText()!=null && !box.getText().getText().isEmpty()){
+                                    win++;
+                                }
+                            }
+                            if(win==boxList.size()){
+                                rotateTransition.play();
+
+                                Alert alert = new Alert(Alert.AlertType.INFORMATION,
+                                        "YOU WON!");
+                                alert.setTitle("Hooray!");
+                                alert.setHeaderText("Congrats!");
+                                alert.showAndWait();
+                                
+                                System.out.println("you won bro");
+                            }
+
                             if(showMistakes) {
                                 for (Box box : boxList) {
                                     if (box.isColumnError()) {
@@ -654,12 +690,25 @@ public class Main extends Application {
                 clear.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent actionEvent) {
-                        for(Box box : boxList){
-                            canvas.getChildren().remove(box.getText());
-                            box.getText().setText(null);
-                            box.setFlag(false);
-                            box.getRec().setStroke(Color.TRANSPARENT);
+                        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                                "Are you sure you want to clear the grid?");
+
+                        alert.setTitle("Grid clear confirmation");
+                        alert.setHeaderText("Are you sure?");
+
+                        Optional<ButtonType> result = alert.showAndWait();
+
+
+                        if (result.isPresent() && result.get() == ButtonType.OK) {
+                            for(Box box : boxList){
+                                canvas.getChildren().remove(box.getText());
+                                box.getText().setText(null);
+                                box.setFlag(false);
+                                box.getRec().setStroke(Color.TRANSPARENT);
+                            }
                         }
+
+
                     }
                 });
 
@@ -1190,7 +1239,7 @@ public class Main extends Application {
 
         hbox.getChildren().addAll(undo, redo, clear, textArea, load, mistake);
         vbox.getChildren().addAll(stackpane, hbox, numberBox);
-        primaryStage.setScene(new Scene(vbox));
+        primaryStage.setScene(new Scene(vbox, 1000, 1000));
         primaryStage.show();
 
     }
