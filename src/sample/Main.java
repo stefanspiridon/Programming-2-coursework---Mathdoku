@@ -134,7 +134,7 @@ public class Main extends Application {
 
 
         primaryStage.setTitle("MathDoku");
-        VBox vbox = new VBox();
+        HBox mainHBox = new HBox();
 
         StackPane stackpane = new StackPane();
         stackpane.setPadding(new Insets(10, 10, 10, 10));
@@ -145,8 +145,8 @@ public class Main extends Application {
         stackpane.getChildren().addAll(canvas, gridPane);
 
         //HBOX TO STORE DIFFERENT BUTTONS
-        HBox hbox = new HBox(10);
-        hbox.setPadding(new Insets(10, 10, 10, 10));
+        VBox buttonVBox = new VBox(10);
+        buttonVBox.setPadding(new Insets(10, 10, 10, 10));
         Button undo = new Button("Undo");
         undo.setDisable(true);
         Button redo = new Button("Redo");
@@ -156,12 +156,14 @@ public class Main extends Application {
         /*TextField file = new TextField("input.txt");
         TextField input = new TextField("Load game input");*/
         TextArea textArea = new TextArea();
+        textArea.setPrefHeight(300);
+        textArea.setPrefWidth(120);
         CheckBox mistake = new CheckBox("Show Mistakes");
         mistake.setSelected(true);
         Button load = new Button("Load");
 
         //HBOX TO STORE NUMBER GUI BUTTONS
-        HBox numberBox = new HBox(5);
+        VBox numberBox = new VBox(5);
         numberBox.setPadding(new Insets(10, 10, 10, 10));
 
 
@@ -204,8 +206,11 @@ public class Main extends Application {
         font.getItems().add("medium");
         font.getItems().add("big");
 
-        numberBox.getChildren().addAll(select, font);
+        //numberBox.getChildren().addAll(select, font);
 
+        ArrayList<Integer> nodeList = new ArrayList<>();
+
+        Scene scene = new Scene(mainHBox);
 
         load.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -267,13 +272,63 @@ public class Main extends Application {
 
                     String[] nodes = line.split(",");
                     for (String node : nodes) {
+                        //System.out.println(node);
                         cage.add(Integer.parseInt(node));
+                        nodeList.add(Integer.parseInt(node));
                     }
                     cageList.add(cage);
 
                 }
 
-                n=6;
+                Set<Integer> nodeSet = new HashSet<>();
+
+                for(int node : nodeList){
+                    //System.out.println(node);
+                    nodeSet.add(node);
+                }
+
+                if(nodeList.size()!=nodeSet.size()){
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Different cages share the same node");
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Wrong input format");
+                    alert.showAndWait();
+                }
+
+                Collections.sort(nodeList);
+
+                int numberOfNodes = nodeList.get(nodeList.size()-1) + 1;
+                n= (int) Math.sqrt(numberOfNodes);
+                //System.out.println(n);
+
+                if(n<2 || n>8){
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "N is out of bounds");
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Wrong input format");
+                    alert.showAndWait();
+                }
+
+                if(nodeList.size()!=n*n){
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "There are too many/few nodes");
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Wrong input format");
+                    alert.showAndWait();
+                }
+
+                for (ArrayList<Integer> cage : cageList) {
+                    for (int i = 0; i < cage.size()-1; i++) {
+
+                        boolean right = i < cage.size() - 1 && cage.get(i) == (cage.get(i + 1)) - 1;
+                        boolean down = i < cage.size() - 1 && cage.get(i) == (cage.get(i + 1)) - n;
+                        boolean square = i < cage.size() - 2 && cage.get(i) == (cage.get(i + 2)) - n;
+
+                        if(!right && !down && !square){
+                            Alert alert = new Alert(Alert.AlertType.ERROR, "Cells in a cage are not adjacent");
+                            alert.setTitle("Error");
+                            alert.setHeaderText("Wrong input format");
+                            alert.showAndWait();
+                        }
+                    }
+                }
 
                 //DEFAULT BORDER LINES
                 Line hline = new Line();
@@ -347,18 +402,22 @@ public class Main extends Application {
 
                     for(int i=0; i<cage.size(); i++){
 
-                        if (i < cage.size() - 1 && cage.get(i) == (cage.get(i + 1)) - 1) {
+                        boolean right = i < cage.size() - 1 && cage.get(i) == (cage.get(i + 1)) - 1;
+                        boolean down = i < cage.size() - 1 && cage.get(i) == (cage.get(i + 1)) - n;
+                        boolean square = i < cage.size() - 2 && cage.get(i) == (cage.get(i + 2)) - n;
+
+                        if (right) {
                             //System.out.println("skip");
                             verticalLines.get(cage.get(i)-1).setStrokeWidth(1);
                         }
 
-                        if (i < cage.size() - 1 &&cage.get(i) == (cage.get(i + 1)) - n) {
+                        if (down) {
                             //System.out.println("skip");
                             horizontalLines.get(cage.get(i)-1).setStrokeWidth(1);
                         }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-                        if (i < cage.size() - 2 &&cage.get(i) == (cage.get(i + 2)) - n) {
+                        if (square) {
                             //System.out.println("skip");                                                 ///THIS IS REALLY BAD BUT WORKS FOR NOW///
                             horizontalLines.get(cage.get(i)-1).setStrokeWidth(1);
                         }
@@ -378,8 +437,6 @@ public class Main extends Application {
                     canvas.getChildren().add(text);
                 }
 
-
-
                 //NUMBER GUI BUTTONS CREATION AND EVENT HANDLING
                 for (int i =1; i<=n; i++){
                     Button button = new Button(String.valueOf(i));
@@ -398,6 +455,7 @@ public class Main extends Application {
                                 //box.getText().setFont(Font.font ("Comic Sans MS", 50));
                                 box.setNum(num);
                                 box.getText().setText(box.getNum());
+                                //box.setText(new Text(box.getNum()));
                                 canvas.getChildren().add(box.getText());
                                 boxStack.add(box);
                                 //box.setText(box.getText());
@@ -434,7 +492,7 @@ public class Main extends Application {
                 }
 
                 //EVENT HANDLER FOR DIGIT KEYS
-                vbox.setOnKeyPressed(new EventHandler<KeyEvent>() {
+                mainHBox.setOnKeyPressed(new EventHandler<KeyEvent>() {
                     @Override
                     public void handle(KeyEvent keyEvent) {
                         //System.out.println(keyEvent.getCode());
@@ -452,6 +510,7 @@ public class Main extends Application {
                                         //box.getText().setFont(Font.font("Comic Sans MS", 50));
                                         box.setNum(num);
                                         box.getText().setText(box.getNum());
+
                                         canvas.getChildren().add(box.getText());
                                         boxStack.add(box);
                                         //box.setText(box.getText());
@@ -514,8 +573,8 @@ public class Main extends Application {
 
                             for (int a = 0; a < boxList.size(); a++) {
 
-                                int column = a % 6;// 1 mod 6 = 1
-                                int row = (int) a / 6;// 1 / 6 = 0
+                                int column = a % n;// 1 mod 6 = 1
+                                int row = (int) a / n;// 1 / 6 = 0
 
                                 //check for column
                                 ArrayList<Box> columnBoxList = new ArrayList<>();
@@ -661,7 +720,7 @@ public class Main extends Application {
                                 alert.setHeaderText("Congrats!");
                                 alert.showAndWait();
                                 
-                                System.out.println("you won bro");
+                                //System.out.println("you won bro");
                             }
 
                             if(showMistakes) {
@@ -805,447 +864,21 @@ public class Main extends Application {
                     }
                 });
 
+                //scene = new Scene(mainHBox, n*100, n*100);
+                primaryStage.setMinWidth(n*100 + 100 + buttonVBox.getWidth() + numberBox.getWidth());
+                primaryStage.setMinHeight(n*100 + 100);
+
             }
         });
 
-       /* //String filename = file.getText();
-
-        String filename = "input.txt";
-        String workingDirectory = System.getProperty("user.dir");
-        File inputFile = new File(workingDirectory, filename);
-        try {
-            //String pathname=file.getText();
-            //File inputFile = new File("sample/input.txt");
-            Scanner scanner = new Scanner(inputFile);
-            while (scanner.hasNextLine()) {
-                ArrayList<Integer> cage = new ArrayList<Integer>();
-                String string = scanner.nextLine();
-
-                String number = string.substring(0, string.indexOf(' '));
-                strings.add(number);
-                String line = string.substring(string.indexOf(' ')+1);
-                //System.out.println(number);
-
-                String[] nodes = line.split(",");
-                for (String node : nodes) {
-                    cage.add(Integer.parseInt(node));
-                }
-                cageList.add(cage);
-            }
-        }catch (Exception e){
-            System.out.println(e);
-        }*/
-
-
-
-        //////////////////////////////////////////////////////////////////////////////
-        //EVENT HANDELING
-        //////////////////////////////////////////////////////////////////////////////
-
-        //System.out.println(boxList.size());
-
-        //if(n != 0)
-/*        //NUMBER GUI BUTTONS CREATION AND EVENT HANDLING
-        for (int i =1; i<=n; i++){
-            Button button = new Button(String.valueOf(i));
-            int finalI = i;
-
-            button.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
-                num=String.valueOf(finalI);
-                for(Box box : boxList){
-                    if(box.getFlag()){
-                        int x = (int) ((int) box.getRec().getX() + box.getRec().getWidth()/2);
-                        int y = (int) ((int) box.getRec().getY()+box.getRec().getHeight()/2);
-
-                        //Text number = new Text(x-13, y+19,num);
-                        box.getText().setX(x-13);
-                        box.getText().setY(y+19);
-                        //box.getText().setFont(Font.font ("Comic Sans MS", 50));
-                        box.setNum(num);
-                        box.getText().setText(box.getNum());
-                        canvas.getChildren().add(box.getText());
-                        boxStack.add(box);
-                        //box.setText(box.getText());
-
-                        box.setFlag(false);
-                        box.getRec().setStroke(Color.TRANSPARENT);
-                    }
-                }
-            });
-            numberBox.getChildren().add(button);
-        }
-
-        //BACKSPACE GUI BUTTON HANDLE
-        backspace.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
-            for(Box box : boxList){
-                if(box.getFlag()){
-                    memory.add(box);
-                    canvas.getChildren().remove(box.getText());
-                    box.getText().setText(null);
-                    box.setFlag(false);
-                    box.getRec().setStroke(Color.TRANSPARENT);
-                }
-            }
-        });
-
-        //EVENT HANDLER FOR CHANGING THE SELECTED FLAG
-        for(Box box : boxList){
-            box.getRec().addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
-                box.setFlag(true);
-                box.getRec().setStroke(Color.PINK);
-            });
-        }
-
-        //EVENT HANDLER FOR DIGIT KEYS
-        vbox.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent keyEvent) {
-                //System.out.println(keyEvent.getCode());
-                for (int i = 1; i <= n; i++) {
-                    if ((String.valueOf(keyEvent.getCode())).equals("DIGIT"+String.valueOf(i))) {
-                        num = String.valueOf(i);
-                        for (Box box : boxList) {
-                            if (box.getFlag()) {
-
-                                int x = (int) ((int) box.getRec().getX() + box.getRec().getWidth() / 2);
-                                int y = (int) ((int) box.getRec().getY() + box.getRec().getHeight() / 2);
-
-                                box.getText().setX(x - 13);
-                                box.getText().setY(y + 19);
-                                //box.getText().setFont(Font.font("Comic Sans MS", 50));
-                                box.setNum(num);
-                                box.getText().setText(box.getNum());
-                                canvas.getChildren().add(box.getText());
-                                boxStack.add(box);
-                                //box.setText(box.getText());
-
-                                box.setFlag(false);
-                                box.getRec().setStroke(Color.TRANSPARENT);
-                            }
-                        }
-                    }
-
-                    if(keyEvent.getCode()==KeyCode.BACK_SPACE){
-                        for(Box box : boxList){
-                            if(box.getFlag()){
-                                memory.add(box);
-                                canvas.getChildren().remove(box.getText());
-                                box.getText().setText(null);
-                                box.setFlag(false);
-                                box.getRec().setStroke(Color.TRANSPARENT);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        //MISTAKE DETECTION
-        for(Box box : boxList){
-            box.getText().textProperty().addListener(new ChangeListener<String>() {
-                @Override
-                public void changed(ObservableValue<? extends String> observableValue, String s, String t1) {
-                    if(!boxStack.isEmpty()){
-                        undo.setDisable(false);
-                    }else{
-                        undo.setDisable(true);
-                    }
-
-                    if(!memory.isEmpty()){
-                        redo.setDisable(false);
-                    }else{
-                        redo.setDisable(true);
-                    }
-
-                    int win=0;
-                    for(Box box : boxList){
-                        if(!box.isCageError() && !box.isColumnError() && !box.isRowError()
-                                && box.getText().getText()!=null && !box.getText().getText().isEmpty()){
-                            win++;
-                        }
-                    }
-                    if(win==boxList.size()){
-                        rotateTransition.play();
-                        System.out.println("you won bro");
-                    }
-
-                    for(Box box : boxList){
-                        box.setColumnError(false);
-                        box.setRowError(false);
-                        box.setCageError(false);
-                    }
-
-                    for (int a = 0; a < boxList.size(); a++) {
-
-                        int column = a % 6;// 1 mod 6 = 1
-                        int row = (int) a / 6;// 1 / 6 = 0
-
-                        //check for column
-                        ArrayList<Box> columnBoxList = new ArrayList<>();
-                        for (int j = 0; j < n; j++) {
-                            columnBoxList.add(boxList.get(column + n * j));
-                        }
-
-                        ArrayList<Integer> numbersInBoxesColumn = new ArrayList<>();
-                        for (int j = 0; j < n; j++) {
-                            String string = boxList.get(column + n * j).getText().getText();
-                            if (string != null && !string.isEmpty()) {
-                                int number = Integer.parseInt(string);
-                                numbersInBoxesColumn.add(number);
-                            }
-                        }
-
-                        Set<Integer> boxColumnSet = new HashSet<>(numbersInBoxesColumn);
-                        boxColumnSet.addAll(numbersInBoxesColumn);
-
-                        if (numbersInBoxesColumn.size() != boxColumnSet.size()) {
-                            for (Box box : columnBoxList) {
-                                //box.getRec().setFill(Color.rgb(255, 0, 0, 0.2));
-                                box.setColumnError(true);
-                            }
-                        }
-
-                        //check for row
-                        ArrayList<Box> rowBoxList = new ArrayList<>();
-                        for (int j = 0; j < n; j++) {
-                            rowBoxList.add(boxList.get(row * n + j));
-                        }
-
-                        ArrayList<Integer> numbersInBoxesRow = new ArrayList<>();
-                        for (int j = 0; j < n; j++) {
-                            String string = boxList.get(row * n + j).getText().getText();
-                            if (string != null && !string.isEmpty()) {
-                                int number = Integer.parseInt(string);
-                                numbersInBoxesRow.add(number);
-                            }
-                        }
-
-                        Set<Integer> boxRowSet = new HashSet<>(numbersInBoxesRow);
-                        boxRowSet.addAll(numbersInBoxesRow);
-
-                        if (numbersInBoxesRow.size() != boxRowSet.size()) {
-                            for (Box box : rowBoxList) {
-                                //box.getRec().setFill(Color.rgb(0, 0, 255, 0.2));
-                                box.setRowError(true);
-                            }
-                        }
-
-                        //CAGES
-                        for (int i = 0; i < cageList.size(); i++) {
-                            ArrayList<Integer> cage = cageList.get(i);
-                            ArrayList<Box> cageBoxList = new ArrayList<>();
-                            for (int j = 0; j < cage.size(); j++) {
-                                cageBoxList.add(boxList.get(cage.get(j) - 1));
-                            }
-
-                            ArrayList<Integer> numbersInBoxesCage = new ArrayList<>();
-                            for (int j = 0; j < cage.size(); j++) {
-                                String string = boxList.get(cage.get(j) - 1).getText().getText();
-                                if (string != null && !string.isEmpty()) {
-                                    int number = Integer.parseInt(string);
-                                    numbersInBoxesCage.add(number);
-                                }
-                            }
-
-                            String node = strings.get(i);
-                            int target = Integer.parseInt(node.substring(0, node.length() - 1));
-                            String operation = node.substring(node.length() - 1);
-
-                            if (numbersInBoxesCage.size() == cage.size()) {
-
-                                if (operation.equals("+")) {
-                                    int result = 0;
-                                    for (int num1 : numbersInBoxesCage) {
-                                        result = result + num1;
-                                    }
-
-                                    if (result != target) {
-                                        for (Box box : cageBoxList) {
-                                            //box.getRec().setFill(Color.rgb(0, 255, 0, 0.2));
-                                            box.setCageError(true);
-                                        }
-                                    }
-                                }
-
-                                if (operation.equals("x")) {
-                                    int result = 1;
-                                    for (int num1 : numbersInBoxesCage) {
-                                        result = result * num1;
-                                    }
-
-                                    if (result != target) {
-                                        for (Box box : cageBoxList) {
-                                            //box.getRec().setFill(Color.rgb(0, 255, 0, 0.2));
-                                            box.setCageError(true);
-                                        }
-                                    }
-                                }
-
-                                if (operation.equals("-") && numbersInBoxesCage.size() == 2) {
-                                    int result1 = numbersInBoxesCage.get(0) - numbersInBoxesCage.get(1);
-                                    int result2 = numbersInBoxesCage.get(1) - numbersInBoxesCage.get(0);
-
-                                    if (result1 != target && result2 != target) {
-                                        for (Box box : cageBoxList) {
-                                            //box.getRec().setFill(Color.rgb(0, 255, 0, 0.2));
-                                            box.setCageError(true);
-                                        }
-                                    }
-                                }
-
-                                if (operation.equals("÷") && numbersInBoxesCage.size() == 2) {
-                                    int result1 = numbersInBoxesCage.get(0) / numbersInBoxesCage.get(1);
-                                    int result2 = numbersInBoxesCage.get(1) / numbersInBoxesCage.get(0);
-
-                                    if (result1 != target && result2 != target) {
-                                        for (Box box : cageBoxList) {
-                                            //box.getRec().setFill(Color.rgb(0, 255, 0, 0.2));
-                                            box.setCageError(true);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if(showMistakes) {
-                        for (Box box : boxList) {
-                            if (box.isColumnError()) {
-                                box.getRec().setFill(Color.rgb(255, 0, 0, 0.2));
-                            }
-                            if (box.isRowError()) {
-                                box.getRec().setFill(Color.rgb(0, 0, 255, 0.2));
-                            }
-                            if (box.isCageError()) {
-                                box.getRec().setFill(Color.rgb(0, 255, 0, 0.2));
-                            }
-                        }
-                    }
-
-                    for (Box box : boxList) {
-                        if (!box.isColumnError() && !box.isRowError() && !box.isCageError()) {
-                            box.getRec().setFill(Color.TRANSPARENT);
-                        }
-                    }
-                }
-            });
-        }
-
-        clear.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                for(Box box : boxList){
-                    canvas.getChildren().remove(box.getText());
-                    box.getText().setText(null);
-                    box.setFlag(false);
-                    box.getRec().setStroke(Color.TRANSPARENT);
-                }
-            }
-        });
-
-        undo.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-
-                if(!boxStack.isEmpty()) {
-                    Box box = boxStack.pop();
-                    memory.push(box);
-                    canvas.getChildren().remove(box.getText());
-
-                    box.getText().setText(null);
-                    box.setFlag(false);
-                    box.getRec().setStroke(Color.TRANSPARENT);
-                }
-            }
-        });
-
-        redo.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                if(!memory.isEmpty()) {
-                    Box box = memory.pop();
-
-                    int x = (int) ((int) box.getRec().getX() + box.getRec().getWidth() / 2);
-                    int y = (int) ((int) box.getRec().getY() + box.getRec().getHeight() / 2);
-
-                    box.getText().setX(x - 13);
-                    box.getText().setY(y + 19);
-                    //box.getText().setFont(Font.font("Comic Sans MS", 50));
-                    box.getText().setText(box.getNum());
-                    canvas.getChildren().add(box.getText());
-                    boxStack.push(box);
-                    //box.setText(box.getText());
-
-                    box.setFlag(false);
-                    box.getRec().setStroke(Color.TRANSPARENT);
-                }
-            }
-        });
-
-        mistake.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                showMistakes=mistake.isSelected();
-            }
-        });
-
-        font.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observableValue, Number number, Number t1) {
-                if(t1.equals(0)){
-                    for(Box box : boxList){
-                        *//*Text text = box.getText();
-                        text.setX(text.getX() + 6);*//*
-                        box.getText().setFont(Font.font ("Comic Sans MS", 40));
-                        box.setFontSize(40);
-
-                    }
-
-                    for (Text text : boxLables){
-                        text.setFont(Font.font ("Comic Sans MS", 15));
-                        //text.setY(text.getY()-3);
-                    }
-
-                }
-
-                if(t1.equals(1)){
-                    for(Box box : boxList){
-                        box.getText().setFont(Font.font ("Comic Sans MS", 50));
-                        box.setFontSize(50);
-                    }
-
-                    for (Text text : boxLables){
-                        text.setFont(Font.font ("Comic Sans MS", 20));
-                    }
-                }
-
-                if(t1.equals(2)){
-                    for(Box box : boxList){
-                        *//*Text text = box.getText();
-                        text.setX(text.getX() + 10);
-                        text.setY(text.getY() + 5);*//*
-                        box.getText().setFont(Font.font ("Comic Sans MS", 60));
-                        box.setFontSize(60);
-                    }
-
-                    for (Text text : boxLables){
-                        text.setFont(Font.font ("Comic Sans MS", 25));
-                        //text.setY(text.getY()+5);
-                    }
-                }
-            }
-        });*/
-
-
-        hbox.getChildren().addAll(undo, redo, clear, textArea, load, mistake);
-        vbox.getChildren().addAll(stackpane, hbox, numberBox);
-        primaryStage.setScene(new Scene(vbox, 1000, 1000));
+        buttonVBox.getChildren().addAll( textArea, load, undo, redo, clear, mistake, select, font);
+        mainHBox.getChildren().addAll( buttonVBox, numberBox, stackpane);
+        primaryStage.setScene(scene);
         primaryStage.show();
 
     }
 
     public static void main(String[] args) {
-
         launch(args);
     }
 }
